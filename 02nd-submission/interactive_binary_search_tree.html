@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Binary Search Tree Implementation</title>
+    <!-- External dependencies for tree visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/springy/2.8.0/springy.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/springy/2.8.0/springyui.min.js"></script>
+    <style>
+        /* Container styling for the canvas */
+        #canvas-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+        }
+        canvas {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+        }
+        #controls {
+            margin-top: 20px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+    <div id="controls">
+        <input type="number" id="searchInput" placeholder="Search value">
+        <button onclick="searchValue()">Search</button>
+        <input type="number" id="insertInput" placeholder="Insert value">
+        <button onclick="insertValue()">Insert</button>
+        <input type="number" id="removeInput" placeholder="Remove value">
+        <button onclick="removeValue()">Remove</button>
+    </div>
+    <div id="status" class="status"></div>
+
+    <script>
+        // Node class represents each node in the Binary Search Tree
+        class Node {
+            constructor(value) {
+                this.value = value;
+                this.left = null;    // Left child reference
+                this.right = null;   // Right child reference
+                //console.log(`Created new node with value: ${value}`);
+            }
+        }
+
+        // Binary Search Tree implementation
+        class BinarySearchTree {
+            constructor() {
+                this.root = null;
+                console.log('Initialized new Binary Search Tree');
+            }
+
+            // Build a balanced BST from a sorted array
+            buildFromSortedArray(sortedArray) {
+                console.log('Building BST from sorted array:', sortedArray);
+                this.root = this._buildBalancedBST(sortedArray, 0, sortedArray.length - 1);
+                console.log('Completed building BST');
+            }
+
+            // Recursive helper function to build balanced BST
+            _buildBalancedBST(sortedArray, start, end) {
+                // Base case: if start > end, return null
+                if (start > end) {
+                    //console.log(`Invalid range: start(${start}) > end(${end})`);
+                    return null;
+                }
+
+                // Calculate middle index
+                const mid = Math.floor((start + end) / 2);
+                //console.log(`Creating node from index ${mid} with value ${sortedArray[mid]}`);
+                
+                // Create new node with middle element
+                const node = new Node(sortedArray[mid]);
+
+                // Recursively build left and right subtrees
+                //console.log(`Building left subtree for ${node.value} with range [${start}, ${mid - 1}]`);
+                node.left = this._buildBalancedBST(sortedArray, start, mid - 1);
+                
+                //console.log(`Building right subtree for ${node.value} with range [${mid + 1}, ${end}]`);
+                node.right = this._buildBalancedBST(sortedArray, mid + 1, end);
+
+                return node;
+            }
+
+            // Search for a value in the BST and return the path taken
+            search(value) {
+                console.log(`Searching for value: ${value}`);
+                return this._searchRecursive(this.root, value, []);
+            }
+
+            // Recursive helper function for search
+            _searchRecursive(node, value, path) {
+                if (node === null) {
+                    console.log('Reached null node, value not found');
+                    return null;
+                }
+
+                path.push(node.value);
+                console.log(`Visiting node: ${node.value}, current path: ${path.join(' -> ')}`);
+
+                if (value === node.value) {
+                    console.log(`Found value ${value}! Complete path: ${path.join(' -> ')}`);
+                    return path;
+                } else if (value < node.value) {
+                    console.log(`${value} < ${node.value}, going left`);
+                    return this._searchRecursive(node.left, value, path);
+                } else {
+                    console.log(`${value} > ${node.value}, going right`);
+                    return this._searchRecursive(node.right, value, path);
+                }
+            }
+        }
+
+        // Initialize array with 50 unique random numbers
+        console.log('Generating initial random numbers...');
+        let numbers = [];
+        while (numbers.length < 50) {
+            const num = Math.floor(Math.random() * 1000) + 1;
+            if (!numbers.includes(num)) {
+                numbers.push(num);
+                //console.log(`Added number ${num} to initial array`);
+            }
+        }
+        numbers.sort((a, b) => a - b);
+        console.log('Sorted numbers array:', numbers);
+
+        // Create and initialize BST
+        const bst = new BinarySearchTree();
+        bst.buildFromSortedArray(numbers);
+
+        // Visualization variables
+        let graph = new Springy.Graph();
+        let nodeMap = new Map();
+        let springyCanvas;
+
+        // Recursive function to create visual representation of the tree
+        function visualizeTree(node, parent = null) {
+            if (node === null) return;
+
+            //console.log(`Visualizing node: ${node.value}`);
+            const graphNode = graph.newNode({label: node.value.toString()});
+            nodeMap.set(node, graphNode);
+
+            if (parent !== null) {
+                const parentGraphNode = nodeMap.get(parent);
+                graph.newEdge(parentGraphNode, graphNode);
+                //console.log(`Created edge: ${parent.value} -> ${node.value}`);
+            }
+
+            visualizeTree(node.left, node);
+            visualizeTree(node.right, node);
+        }
+
+        // Initialize or refresh the visualization
+        function initializeVisualization() {
+            console.log('Initializing visualization');
+            graph = new Springy.Graph();
+            nodeMap = new Map();
+            visualizeTree(bst.root);
+            
+            if (springyCanvas) {
+                $('#canvas-container').empty().append('<canvas id="canvas" width="800" height="600"></canvas>');
+            }
+            
+            springyCanvas = jQuery('#canvas').springy({
+                graph: graph,
+                nodeSelected: function(node) {
+                    console.log('Node selected:', JSON.stringify(node.data));
+                }
+            });
+            console.log('Visualization completed');
+        }
+
+        // Initialize first visualization
+        initializeVisualization();
+
+        // Status message display function
+        function showStatus(message, isError = false) {
+            console.log(`Status update: ${message} (${isError ? 'error' : 'success'})`);
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.backgroundColor = isError ? '#ffebee' : '#e8f5e9';
+            status.style.color = isError ? '#c62828' : '#2e7d32';
+        }
+
+        // Search function handler
+        function searchValue() {
+            const value = parseInt(document.getElementById('searchInput').value);
+            console.log(`Search requested for value: ${value}`);
+            
+            if (isNaN(value)) {
+                console.log('Invalid search input');
+                showStatus('Please enter a valid number', true);
+                return;
+            }
+            
+            const path = bst.search(value);
+            if (path) {
+                showStatus('Searched. Value found! Path: ' + path.join(' -> '));
+            } else {
+                showStatus('Searched. Value not found!', true);
+            }
+        }
+
+        // Insert function handler
+        function insertValue() {
+            const value = parseInt(document.getElementById('insertInput').value);
+            console.log(`Insert requested for value: ${value}`);
+            
+            if (isNaN(value)) {
+                console.log('Invalid insert input');
+                showStatus('Please enter a valid number', true);
+                return;
+            }
+            
+            if (!numbers.includes(value)) {
+                numbers.push(value);
+                numbers.sort((a, b) => a - b);
+                console.log('Value inserted. Updated numbers array:', numbers);
+                
+                bst.buildFromSortedArray(numbers);
+                initializeVisualization();
+                showStatus('Value ' + value + ' inserted successfully');
+                document.getElementById('insertInput').value = '';
+            } else {
+                showStatus('Not inserted. Value already exists in the tree', true);
+            }
+        }
+
+        // Remove function handler
+        function removeValue() {
+            const value = parseInt(document.getElementById('removeInput').value);
+            console.log(`Remove requested for value: ${value}`);
+            
+            if (isNaN(value)) {
+                console.log('Invalid remove input');
+                showStatus('Please enter a valid number', true);
+                return;
+            }
+            
+            const index = numbers.indexOf(value);
+            if (index > -1) {
+                numbers.splice(index, 1);
+                console.log('Value removed. Updated numbers array after removal:', numbers);
+                
+                bst.buildFromSortedArray(numbers);
+                initializeVisualization();
+                showStatus('Value ' + value + ' removed successfully');
+                document.getElementById('removeInput').value = '';
+            } else {
+                showStatus('Not removed. Value not found in the tree', true);
+            }
+        }
+    </script>
+</body>
+</html>

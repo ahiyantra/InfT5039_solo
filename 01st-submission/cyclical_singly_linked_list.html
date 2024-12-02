@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!--html lang="en"-->
+<head>
+    <!--meta charset="utf-8" /-->
+    <title>Cyclical Singly Linked List Implementation<</title>
+</head>
+<body>
+    <h1>Cyclical Singly Linked List Implementation</h1>
+    <pre><script>
+    // Node class for Cyclical Singly Linked List
+    function Node(data) {
+        this.data = data;
+        this.next = null;
+    }
+
+    // Cyclical Singly Linked List class
+    function CyclicalSinglyLinkedList() {
+        this.head = null;
+        this.length = 0;
+
+        // Add a new node to the end of the list
+        this.add = function(data) {
+            const newNode = new Node(data);
+            if (!this.head) {
+                this.head = newNode;
+                newNode.next = this.head;
+            } else {
+                let current = this.head;
+                while (current.next !== this.head) {
+                    current = current.next;
+                }
+                current.next = newNode;
+                newNode.next = this.head;
+            }
+            this.length++;
+        };
+
+        // Insert a new node at a specific position
+        this.insert = function(data, position) {
+            if (position < 0 || position > this.length) {
+                console.log("Invalid position");
+                return;
+            }
+
+            const newNode = new Node(data);
+
+            if (position === 0) {
+                if (!this.head) {
+                    this.head = newNode;
+                    newNode.next = this.head;
+                } else {
+                    let current = this.head;
+                    while (current.next !== this.head) {
+                        current = current.next;
+                    }
+                    newNode.next = this.head;
+                    current.next = newNode;
+                    this.head = newNode;
+                }
+            } else {
+                let current = this.head;
+                let index = 0;
+                while (index < position - 1) {
+                    current = current.next;
+                    index++;
+                }
+                newNode.next = current.next;
+                current.next = newNode;
+            }
+
+            this.length++;
+        };
+
+        // Remove a node at a specific position
+        this.remove = function(position) {
+            if (position < 0 || position >= this.length) {
+                console.log("Invalid position");
+                return;
+            }
+
+            if (position === 0) {
+                if (this.length === 1) {
+                    this.head = null;
+                } else {
+                    let current = this.head;
+                    while (current.next !== this.head) {
+                        current = current.next;
+                    }
+                    this.head = this.head.next;
+                    current.next = this.head;
+                }
+            } else {
+                let current = this.head;
+                let index = 0;
+                while (index < position - 1) {
+                    current = current.next;
+                    index++;
+                }
+                current.next = current.next.next;
+            }
+
+            this.length--;
+        };
+
+        // Display the list
+        this.display = function() {
+            if (!this.head) {
+                console.log("list : ","empty");
+                return;
+            }
+            let current = this.head;
+            let result = [];
+            do {
+                result.push(current.data);
+                current = current.next;
+            } while (current !== this.head);
+            console.log("list : ",result.join(' -> ') + ' -> (back to head)');
+        };
+    }
+
+    // Usage examples.
+    console.log("Creating a new Cyclical Singly Linked List:");
+    const list = new CyclicalSinglyLinkedList();
+    list.display();
+    console.log(list);
+
+    console.log("Adding elements:");
+    list.add("one");
+    list.add("two");
+    list.add("three");
+    list.display();
+    console.log(list);
+
+    console.log("Inserting 'new' at position 1:");
+    list.insert("new", 1);
+    list.display();
+    console.log(list);
+
+    console.log("Removing element at position 2:");
+    list.remove(2);
+    list.display();
+    console.log(list);
+
+    </script></pre>
+    <p>(check browser console for details)</p>
+</body>
+</html>

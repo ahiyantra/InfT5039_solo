@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Interactive Levenshtein Distance Calculator</title>
+  </head>
+  <body>
+    <h2>Interactive Levenshtein Distance Calculator</h2>
+    <div>
+      <label for="string1">String 1:</label>
+      <input type="text" id="string1" placeholder="Enter first string..." />
+      <label for="string2">String 2:</label>
+      <input type="text" id="string2" placeholder="Enter second string..." />
+      <button onclick="calculateDistance()">Calculate Distance</button>
+    </div>
+    <div id="distanceOutput"></div>
+    <hr />
+    <h2>Levenshtein Distance Filter</h2>
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Enter search phrase..."
+      oninput="filterTable()"
+    />
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>String</th>
+          <th>Levenshtein Distance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>apple</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>appy</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>application</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>applicable</td>
+          <td>0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <script>
+      // Function to calculate the Levenshtein distance between two strings
+      function levenshteinDistance(a, b) {
+        console.log("Calculating Levenshtein distance between", a, "and", b);
+        const str1 = a.trim();
+        const str2 = b.trim();
+
+        const m = str1.length;
+        const n = str2.length;
+
+        // Initialize a matrix with dimensions (m+1) x (n+1)
+        const dp = new Array(m + 1)
+          .fill(null)
+          .map(() => new Array(n + 1).fill(0));
+
+       // console.log("Initialized matrix:", dp);
+
+        // Initialize the first row and column of the matrix
+        for (let i = 0; i <= m; i++) {
+          dp[i][0] = i;
+        }
+        for (let j = 0; j <= n; j++) {
+          dp[0][j] = j;
+        }
+
+        //console.log("Matrix after initialization:", dp);
+
+        // Fill in the matrix using the Levenshtein algorithm
+        for (let i = 1; i <= m; i++) {
+          for (let j = 1; j <= n; j++) {
+            if (str1[i - 1] === str2[j - 1]) {
+              dp[i][j] = dp[i - 1][j - 1];
+            } else {
+              dp[i][j] =
+                1 +
+                Math.min(
+                  dp[i][j - 1], // Insert
+                  dp[i - 1][j], // Remove
+                  dp[i - 1][j - 1] // Replace
+                );
+            }
+          }
+        }
+
+        console.log("Final matrix:", dp);
+        return dp[m][n];
+      }
+
+      // Function to calculate and display the distance between two input strings
+      function calculateDistance() {
+        console.log("Calculating distance...");
+        const string1 = document.getElementById("string1").value;
+        const string2 = document.getElementById("string2").value;
+        if (string1 && string2) {
+          console.log("Inputs are valid. String 1:", string1, ", String 2:", string2);
+          const distance = levenshteinDistance(
+            string1.normalize("NFD"),
+            string2.normalize("NFD")
+          );
+          document.getElementById(
+            "distanceOutput"
+          ).innerText = `Levenshtein Distance: ${distance}`;
+          console.log("Levenshtein Distance:", distance);
+        } else {
+          console.log("Please enter both strings.");
+          document.getElementById("distanceOutput").innerText =
+            "Please enter both strings.";
+        }
+      }
+
+      // Function to filter the table based on Levenshtein distance
+      function filterTable() {
+        console.log("Filtering table...");
+        const searchPhrase = document
+          .getElementById("searchInput")
+          .value.trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[^a-zA-Z0-9 ]/g, "");
+        console.log("Search phrase:", searchPhrase);
+        const table = document.getElementById("dataTable");
+        const rows = table
+          .getElementsByTagName("tbody")[0]
+          .getElementsByTagName("tr");
+
+        if (searchPhrase.length === 0) {
+          // Show all rows if search phrase is empty
+          console.log("Search phrase is empty. Showing all rows.");
+          for (let row of rows) {
+            row.style.display = "";
+            row.classList.remove("highlight");
+            row.cells[1].innerText = "0";
+          }
+          return;
+        }
+
+        for (let row of rows) {
+          const string = row.cells[0].innerText
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[^a-zA-Z0-9 ]/g, "");
+          console.log("Comparing with row string:", string);
+          const distance = levenshteinDistance(searchPhrase, string);
+          row.cells[1].innerText = distance;
+          console.log("Levenshtein distance for row:", string, "is", distance);
+          if (distance <= 3) {
+            // Show rows where distance is less than or equal to 3
+            row.style.display = "";
+          } else {
+            row.style.display = "none";
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

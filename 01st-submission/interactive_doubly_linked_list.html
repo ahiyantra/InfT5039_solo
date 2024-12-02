@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!--html lang="en"-->
+<head>
+    <!--meta charset="utf-8" /-->
+    <title>Interactive Doubly Linked List Implementation</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive Doubly Linked List Implementation</h1>
+    
+    <form>
+        <input type="text" id="dataInput" placeholder="Enter data"/>
+        <input type="number" id="positionInput" placeholder="Enter position"/>
+        <button type="button" onclick="addNode()">Add</button>
+        <button type="button" onclick="insertNode()">Insert</button>
+        <button type="button" onclick="removeNode()">Remove</button>
+    </form>
+
+    <table id="listTable">
+        <tr>
+            <th>Position</th>
+            <th>Data</th>
+        </tr>
+    </table>
+
+    <div id="displayOutput"></div>
+
+    <script>
+    // Node class represents each element in the doubly linked list
+    function Node(data) {
+        this.data = data;
+        this.prev = null;
+        this.next = null;
+    }
+
+    // DoublyLinkedList class implements the doubly linked list data structure
+    function DoublyLinkedList() {
+        this.head = null;
+        this.tail = null;
+        this.length = 0;
+
+        // Add a new node to the end of the list
+        this.add = function(data) {
+            console.log("adding node <",data,"> at the end ..");
+            const newNode = new Node(data);
+            if (!this.head) {
+                this.head = newNode;
+                this.tail = newNode;
+            } else {
+                this.tail.next = newNode;
+                newNode.prev = this.tail;
+                this.tail = newNode;
+            }
+            this.length++;
+            this.updateTable();
+        };
+
+        // Insert a new node at a specific position
+        this.insert = function(data, position) {
+            console.log("inserting node <",data,"> at position <",position,"> ..");
+            if (position < 0 || position > this.length) {
+                console.log("Invalid position");
+                return;
+            }
+
+            const newNode = new Node(data);
+
+            if (position === 0) {
+                newNode.next = this.head;
+                if (this.head) this.head.prev = newNode;
+                this.head = newNode;
+                if (!this.tail) this.tail = newNode;
+            } else if (position === this.length) {
+                this.tail.next = newNode;
+                newNode.prev = this.tail;
+                this.tail = newNode;
+            } else {
+                let current = this.head;
+                let index = 0;
+                while (index < position) {
+                    current = current.next;
+                    index++;
+                }
+                newNode.next = current;
+                newNode.prev = current.prev;
+                current.prev.next = newNode;
+                current.prev = newNode;
+            }
+
+            this.length++;
+            this.updateTable();
+        };
+
+        // Remove a node at a specific position
+        this.remove = function(position) {
+            console.log("removing the node at position <",position,"> ..");
+            if (position < 0 || position >= this.length) {
+                console.log("Invalid position");
+                return;
+            }
+
+            let current = this.head;
+
+            if (position === 0) {
+                this.head = current.next;
+                if (this.head) this.head.prev = null;
+                if (this.length === 1) this.tail = null;
+            } else if (position === this.length - 1) {
+                current = this.tail;
+                this.tail = current.prev;
+                this.tail.next = null;
+            } else {
+                let index = 0;
+                while (index < position) {
+                    current = current.next;
+                    index++;
+                }
+                current.prev.next = current.next;
+                current.next.prev = current.prev;
+            }
+
+            this.length--;
+            this.updateTable();
+        };
+
+        // Update the HTML table with the current list content
+        this.updateTable = function() {
+            const table = document.getElementById("listTable");
+            // Clear existing rows except the header
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+
+            let current = this.head;
+            let index = 0;
+            while (current) {
+                const row = table.insertRow(-1);
+                const cellPosition = row.insertCell(0);
+                const cellData = row.insertCell(1);
+                cellPosition.textContent = index;
+                cellData.textContent = current.data;
+                current = current.next;
+                index++;
+            }
+        };
+
+        // Display the list content as a string
+        this.display = function() {
+            let output = "list : ";
+            let current = this.head;
+            while (current) {
+                output += current.data + " <-> ";
+                current = current.next;
+            }
+            output += "(back to head)";
+            document.getElementById("displayOutput").textContent = output;
+        };
+    }
+
+    // Create a new DoublyLinkedList instance
+    const list = new DoublyLinkedList();
+
+    // Function to add a new node
+    function addNode() {
+        const data = document.getElementById("dataInput").value;
+        if (data) {
+            list.add(data);
+            document.getElementById("dataInput").value = "";
+            list.display(); // Update the display output
+        }
+    }
+
+    // Function to insert a new node at a specific position
+    function insertNode() {
+        const data = document.getElementById("dataInput").value;
+        const position = parseInt(document.getElementById("positionInput").value);
+        if (data && !isNaN(position)) {
+            list.insert(data, position);
+            document.getElementById("dataInput").value = "";
+            document.getElementById("positionInput").value = "";
+            list.display(); // Update the display output
+        }
+    }
+
+    // Function to remove a node at a specific position
+    function removeNode() {
+        const position = parseInt(document.getElementById("positionInput").value);
+        if (!isNaN(position)) {
+            list.remove(position);
+            document.getElementById("positionInput").value = "";
+            list.display(); // Update the display output
+        }
+    }
+
+    // Usage examples.
+    //console.log("Adding elements:");
+    list.add("First");
+    list.add("Second");
+    list.add("Third");
+    list.display();
+
+    //console.log("Inserting 'new' at position 1:");
+    list.insert("New", 1);
+    list.display();
+
+    //console.log("Removing element at position 2:");
+    list.remove(2);
+    list.display();
+
+    </script>
+</body>
+</html>

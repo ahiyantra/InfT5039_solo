@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Breadth First Search Implementation</title>
+    <!-- External dependencies for tree visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/springy/2.8.0/springy.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/springy/2.8.0/springyui.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        canvas {
+            border: 2px solid #333;
+            background-color: white;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <canvas id="graphCanvas" width="600" height="400"></canvas>
+        <div id="controls">
+            <div class="input-group">
+                <input type="text" id="nodeInput" placeholder="Add Node (e.g., 1)">
+                <button onclick="addNode()">Add Node</button>
+                <input type="text" id="removeNodeInput" placeholder="Remove Node (e.g., 1)">
+                <button onclick="removeNode()">Remove Node</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="edgeFromInput" placeholder="From Node">
+                <input type="text" id="edgeToInput" placeholder="To Node">
+                <button onclick="addEdge()">Add Edge</button>
+                <input type="text" id="removeEdgeFromInput" placeholder="From Node">
+                <input type="text" id="removeEdgeToInput" placeholder="To Node">
+                <button onclick="removeEdge()">Remove Edge</button>
+            </div>
+            <div class="input-group">
+                <select id="startNodeSelect"></select>
+                <button onclick="performBFS()">Breadth-First Search</button>
+            </div>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Graph class for traversal operations
+        class GraphTraversal {
+            constructor() {
+                this.graph = {};
+                this.springyGraph = new Springy.Graph();
+                this.graphNodes = new Map(); // Keep track of Springy nodes
+                this.springyEdges = new Set(); // Keep track of Springy edges
+            }
+
+            // Add a node to the graph
+            addNode(node) {
+                if (!this.graph[node]) {
+                    this.graph[node] = [];
+                    console.log(`Node ${node} added to graph`);
+                    
+                    // Add to Springy graph
+                    const springyNode = this.springyGraph.newNode({ label: node });
+                    this.graphNodes.set(node, springyNode);
+                    //console.log(`Added Springy node for ${node}`);
+                    
+                    this.updateStartNodeSelect();
+                    //this.logGraph();
+                }
+            }
+
+            // Remove a node from the graph
+            removeNode(node) {
+                if (this.graph[node]) {
+                    // Remove edges associated with this node
+                    this.graph[node].forEach(neighbor => {
+                        this.graph[neighbor] = this.graph[neighbor].filter(n => n !== node);
+                        // Remove Springy edges
+                        const fromNode = this.graphNodes.get(neighbor);
+                        const toNode = this.graphNodes.get(node);
+                        this.removeSpringyEdge(fromNode, toNode);
+                    });
+
+                    // Remove the node from the graph
+                    delete this.graph[node];
+                    console.log(`Node ${node} removed from graph`);
+                    
+                    // Remove from Springy graph
+                    const springyNode = this.graphNodes.get(node);
+                    this.springyGraph.removeNode(springyNode);
+                    this.graphNodes.delete(node);
+                    //console.log(`Removed Springy node for ${node}`);
+                    
+                    this.updateStartNodeSelect();
+                    //this.logGraph();
+                }
+            }
+
+            // Add an edge to the graph
+            addEdge(from, to) {
+                if (!this.graph[from]) this.addNode(from);
+                if (!this.graph[to]) this.addNode(to);
+
+                if (!this.graph[from].includes(to)) {
+                    this.graph[from].push(to);
+                    this.graph[to].push(from); // For undirected graph
+                    console.log(`Edge added from ${from} to ${to}`);
+                    
+                    // Add to Springy graph
+                    const fromNode = this.graphNodes.get(from);
+                    const toNode = this.graphNodes.get(to);
+                    const springyEdge = this.springyGraph.newEdge(fromNode, toNode);
+                    this.springyEdges.add({ from: fromNode, to: toNode, edge: springyEdge });
+                    //console.log(`Added Springy edge between ${from} and ${to}`);
+                    //this.logGraph();
+                }
+            }
+
+            // Remove an edge from the graph
+            removeEdge(from, to) {
+                if (this.graph[from] && this.graph[to]) {
+                    this.graph[from] = this.graph[from].filter(node => node !== to);
+                    this.graph[to] = this.graph[to].filter(node => node !== from);
+                    console.log(`Edge removed from ${from} to ${to}`);
+                    
+                    // Remove from Springy graph
+                    const fromNode = this.graphNodes.get(from);
+                    const toNode = this.graphNodes.get(to);
+                    this.removeSpringyEdge(fromNode, toNode);
+                    //console.log(`Removed Springy edge between ${from} and ${to}`);
+                    //this.logGraph();
+                }
+            }
+
+            // Helper method to remove Springy edges
+            removeSpringyEdge(fromNode, toNode) {
+                const edgeToRemove = [...this.springyEdges].find(
+                    edge => (edge.from.id === fromNode.id && edge.to.id === toNode.id) ||
+                            (edge.from.id === toNode.id && edge.to.id === fromNode.id)
+                );
+                if (edgeToRemove) {
+                    this.springyGraph.removeEdge(edgeToRemove.edge);
+                    this.springyEdges.delete(edgeToRemove);
+                }
+            }
+
+            // Breadth-First Search (BFS) algorithm
+            breadthFirstSearch(start) {
+                console.log(`Starting BFS from node ${start}`);
+                const visited = new Set([start]);
+                const result = [];
+                const queue = [start];
+
+                while (queue.length > 0) {
+                    const node = queue.shift();
+                    result.push(node);
+                    console.log(`BFS visiting node ${node}`);
+
+                    for (let neighbor of this.graph[node]) {
+                        if (!visited.has(neighbor)) {
+                            visited.add(neighbor);
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+
+                return result;
+            }
+
+            // Update the start node dropdown list
+            updateStartNodeSelect() {
+                const select = document.getElementById('startNodeSelect');
+                select.innerHTML = '';
+                Object.keys(this.graph).forEach(node => {
+                    const option = document.createElement('option');
+                    option.value = node;
+                    option.textContent = node;
+                    select.appendChild(option);
+                });
+            }
+
+            // Log the current state of the graph
+            logGraph() {
+                console.log('Current graph structure:', Object.keys(this.graph));
+            }
+        }
+
+        // Initialize graph and canvas
+        const graphTraversal = new GraphTraversal();
+        let canvas = document.getElementById('graphCanvas');
+        let ctx = canvas.getContext('2d');
+
+        // Springy.js rendering setup
+        $(canvas).springy({
+            graph: graphTraversal.springyGraph,
+            nodeSelected: function(node) {
+                console.log('Selected:', node);
+            }
+        });
+
+        // UI Functions
+        function addNode() {
+            const nodeInput = document.getElementById('nodeInput');
+            const node = nodeInput.value.trim();
+            if (node && node.match(/^\d+$/)) {
+                graphTraversal.addNode(node);
+                nodeInput.value = '';
+            } else {
+                alert('Please enter a valid numerical node');
+            }
+        }
+
+        function removeNode() {
+            const removeNodeInput = document.getElementById('removeNodeInput');
+            const node = removeNodeInput.value.trim();
+            if (node && node.match(/^\d+$/)) {
+                graphTraversal.removeNode(node);
+                removeNodeInput.value = '';
+            } else {
+                alert('Please enter a valid numerical node');
+            }
+        }
+
+        function addEdge() {
+            const fromInput = document.getElementById('edgeFromInput');
+            const toInput = document.getElementById('edgeToInput');
+            const from = fromInput.value.trim();
+            const to = toInput.value.trim();
+            
+            if (from && to && from.match(/^\d+$/) && to.match(/^\d+$/)) {
+                graphTraversal.addEdge(from, to);
+                fromInput.value = '';
+                toInput.value = '';
+            } else {
+                alert('Please enter valid numerical node names');
+            }
+        }
+
+        function removeEdge() {
+            const fromInput = document.getElementById('removeEdgeFromInput');
+            const toInput = document.getElementById('removeEdgeToInput');
+            const from = fromInput.value.trim();
+            const to = toInput.value.trim();
+            
+            if (from && to && from.match(/^\d+$/) && to.match(/^\d+$/)) {
+                graphTraversal.removeEdge(from, to);
+                fromInput.value = '';
+                toInput.value = '';
+            } else {
+                alert('Please enter valid numerical node names');
+            }
+        }
+
+        function performBFS() {
+            const startNode = document.getElementById('startNodeSelect').value;
+            if (startNode) {
+                const result = graphTraversal.breadthFirstSearch(startNode);
+                document.getElementById('results').innerHTML = 
+                    `The breadth first search result from \"${startNode}\" is as follows : ${result.join(' → ')}`;
+            }
+        }
+
+        // Add some initial nodes and edges for demonstration
+        window.onload = function() {
+            console.log('Initializing demo graph...');
+            for (let i = 1; i <= 10; i++) {
+                graphTraversal.addNode(i.toString());
+            }
+            graphTraversal.addEdge('1', '2');
+            graphTraversal.addEdge('1', '3');
+            graphTraversal.addEdge('2', '4');
+            graphTraversal.addEdge('2', '5');
+            graphTraversal.addEdge('3', '6');
+            graphTraversal.addEdge('3', '7');
+            graphTraversal.addEdge('4', '8');
+            graphTraversal.addEdge('5', '8');
+            graphTraversal.addEdge('6', '9');
+            graphTraversal.addEdge('7', '9');
+            graphTraversal.addEdge('8', '10');
+            graphTraversal.addEdge('9', '10');
+            graphTraversal.logGraph();
+        };
+    </script>
+</body>
+</html>

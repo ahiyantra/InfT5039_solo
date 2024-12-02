@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Interactive Dijkstra Path Implementation</title>
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include Springy.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/springy/2.7.1/springy.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/springy/2.7.1/springyui.js"></script>
+    <style>
+      canvas {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Interactive Dijkstra Path Implementation</h1>
+    <div>
+      <h3>Manage Nodes</h3>
+      <input id="nodeName" type="text" placeholder="Node Name" />
+      <button onclick="addNode()">Add Node</button>
+      <button onclick="removeNode()">Remove Node</button>
+    </div>
+    <div>
+      <h3>Manage Edges</h3>
+      <input id="fromNode" type="text" placeholder="From Node" />
+      <input id="toNode" type="text" placeholder="To Node" />
+      <input id="distance" type="number" placeholder="Distance" />
+      <input id="time" type="number" placeholder="Time" />
+      <button onclick="addEdge()">Add Edge</button>
+      <button onclick="removeEdge()">Remove Edge</button>
+    </div>
+    <div>
+      <h3>Find Paths</h3>
+      <input id="startNode" type="text" placeholder="Start Node" />
+      <input id="endNode" type="text" placeholder="End Node" />
+      <button onclick="findShortestPath()">Shortest Path (Distance)</button>
+      <button onclick="findFastestPath()">Fastest Path (Time)</button>
+    </div>
+    <div>
+      <h3>Reset Graph</h3>
+      <button onclick="resetGraph()">Reset Graph</button>
+    </div>
+    <div id="output"></div>
+    <canvas id="graphCanvas" width="800" height="600"></canvas>
+
+    <script>
+      // Node class
+      function Node(name) {
+        this.name = name;
+        this.edge_list = [];
+        this.parent = null;
+        this.visited = false;
+        this.shortestDistance = Number.MAX_VALUE;
+        this.shortestTime = Number.MAX_VALUE;
+      }
+
+      // Edge class
+      function Edge(fromNode, toNode, distance, time) {
+        this.fromNode = fromNode;
+        this.toNode = toNode;
+        this.distance = distance;
+        this.time = time;
+        this.color = "#000000"; // Default color for edges
+      }
+
+      // Graph class
+      function Graph() {
+        this.node_list = [];
+        this.edge_list = [];
+      }
+
+      Graph.prototype.addNode = function (node) {
+        if (!this.node_list.find((n) => n.name === node.name)) {
+          this.node_list.push(node);
+          console.log(`Node ${node.name} added to the graph.`);
+          visualizeGraph(this, true);
+        } else {
+          console.log(`Node ${node.name} already exists.`);
+        }
+      };
+
+      Graph.prototype.removeNode = function (nodeName) {
+        const node = this.node_list.find((n) => n.name === nodeName);
+        if (node) {
+          this.node_list = this.node_list.filter((n) => n !== node);
+          this.edge_list = this.edge_list.filter(
+            (e) => e.fromNode !== node && e.toNode !== node
+          );
+          console.log(`Node ${nodeName} and its edges removed.`);
+          visualizeGraph(this, true);
+        } else {
+          console.log(`Node ${nodeName} not found.`);
+        }
+      };
+
+      Graph.prototype.addEdge = function (edge) {
+        const fromExists = this.node_list.includes(edge.fromNode);
+        const toExists = this.node_list.includes(edge.toNode);
+
+        if (fromExists && toExists) {
+          this.edge_list.push(edge);
+          edge.fromNode.edge_list.push(edge);
+          edge.toNode.edge_list.push(edge);
+          console.log(
+            `Edge added between Node ${edge.fromNode.name} and Node ${edge.toNode.name}.`
+          );
+          visualizeGraph(this, true);
+        } else {
+          console.log("Both nodes must exist before adding an edge.");
+        }
+      };
+
+      Graph.prototype.removeEdge = function (fromName, toName) {
+        const edge = this.edge_list.find(
+          (e) => e.fromNode.name === fromName && e.toNode.name === toName
+        );
+        if (edge) {
+          this.edge_list = this.edge_list.filter((e) => e !== edge);
+          edge.fromNode.edge_list = edge.fromNode.edge_list.filter(
+            (e) => e !== edge
+          );
+          edge.toNode.edge_list = edge.toNode.edge_list.filter(
+            (e) => e !== edge
+          );
+          console.log(
+            `Edge between Node ${fromName} and Node ${toName} removed.`
+          );
+          visualizeGraph(this, true);
+        } else {
+          console.log(
+            `Edge between Node ${fromName} and Node ${toName} not found.`
+          );
+        }
+      };
+
+      // Dijkstra's Algorithm for finding shortest path based on distance or time
+      function dijkstraAlgorithm(mode) {
+        const startNodeName = document.getElementById("startNode").value;
+        const endNodeName = document.getElementById("endNode").value;
+
+        if (!startNodeName || !endNodeName) {
+          console.log("Please specify both start and end nodes.");
+          return;
+        }
+
+        const startNode = graph.node_list.find((n) => n.name === startNodeName);
+        const endNode = graph.node_list.find((n) => n.name === endNodeName);
+
+        if (!startNode || !endNode) {
+          console.log("Start or end node not found.");
+          return;
+        }
+
+        // Initialize all nodes
+        graph.node_list.forEach((node) => {
+          node.shortestDistance = Number.MAX_VALUE;
+          node.shortestTime = Number.MAX_VALUE;
+          node.visited = false;
+          node.parent = null;
+        });
+
+        // Set starting node distance or time to 0
+        if (mode === "distance") {
+          startNode.shortestDistance = 0;
+        } else if (mode === "time") {
+          startNode.shortestTime = 0;
+        }
+
+        const unvisitedNodes = [...graph.node_list];
+
+        while (unvisitedNodes.length > 0) {
+          // Sort nodes by shortest distance or time
+          unvisitedNodes.sort((a, b) => {
+            if (mode === "distance") {
+              return a.shortestDistance - b.shortestDistance;
+            } else if (mode === "time") {
+              return a.shortestTime - b.shortestTime;
+            }
+          });
+
+          const currentNode = unvisitedNodes.shift(); // Node with the smallest distance/time
+
+          if (
+            (mode === "distance" &&
+              currentNode.shortestDistance === Number.MAX_VALUE) ||
+            (mode === "time" && currentNode.shortestTime === Number.MAX_VALUE)
+          ) {
+            break; // All remaining nodes are inaccessible
+          }
+
+          currentNode.visited = true;
+
+          // Visit each neighbor of the current node
+          currentNode.edge_list.forEach((edge) => {
+            const neighbor =
+              edge.fromNode === currentNode ? edge.toNode : edge.fromNode;
+
+            if (!neighbor.visited) {
+              if (mode === "distance") {
+                const newDistance =
+                  currentNode.shortestDistance + edge.distance;
+
+                if (newDistance < neighbor.shortestDistance) {
+                  neighbor.shortestDistance = newDistance;
+                  neighbor.parent = currentNode;
+                }
+              } else if (mode === "time") {
+                const newTime = currentNode.shortestTime + edge.time;
+
+                if (newTime < neighbor.shortestTime) {
+                  neighbor.shortestTime = newTime;
+                  neighbor.parent = currentNode;
+                }
+              }
+            }
+          });
+
+          if (currentNode === endNode) {
+            break; // Shortest or fastest path to the end node found
+          }
+        }
+
+        // Backtrack to find the path
+        const path = [];
+        let current = endNode;
+        let totalDistance = 0;
+        let totalTime = 0;
+
+        while (current && current.parent) {
+          path.unshift(current.name);
+          const parent = current.parent;
+          const edge = graph.edge_list.find(
+            (e) =>
+              (e.fromNode === parent && e.toNode === current) ||
+              (e.fromNode === current && e.toNode === parent)
+          );
+          if (edge) {
+            totalDistance += edge.distance;
+            totalTime += edge.time;
+          }
+          current = parent;
+        }
+
+        if (current) {
+          path.unshift(current.name);
+        }
+
+        if (path[0] === startNodeName) {
+          const pathString = `${
+            mode === "distance" ? "Shortest" : "Fastest"
+          } path: ${path.join(" -> ")}`;
+          const totalString = `Total Distance: ${totalDistance}, Total Time: ${totalTime}`;
+          console.log(pathString);
+          console.log(totalString);
+          document.getElementById(
+            "output"
+          ).innerText = `${pathString}\n${totalString}`;
+
+          // Highlight the path in visualization
+          highlightPath(path);
+        } else {
+          console.log("No path found.");
+          document.getElementById("output").innerText = "No path found.";
+        }
+      }
+
+      function findShortestPath() {
+        dijkstraAlgorithm("distance");
+      }
+
+      function findFastestPath() {
+        dijkstraAlgorithm("time");
+      }
+
+      // Function to highlight the path in the graph visualization
+      function highlightPath(path) {
+        graph.edge_list.forEach((edge) => {
+          if (
+            path.includes(edge.fromNode.name) &&
+            path.includes(edge.toNode.name) &&
+            (path.indexOf(edge.fromNode.name) ===
+              path.indexOf(edge.toNode.name) - 1 ||
+              path.indexOf(edge.toNode.name) ===
+                path.indexOf(edge.fromNode.name) - 1)
+          ) {
+            edge.color = "#7DBE3C"; // Highlight color
+          } else {
+            edge.color = "#000000"; // Default color
+          }
+        });
+
+        visualizeGraph(graph, true);
+      }
+
+      // Reset the graph nodes
+      function resetGraph() {
+        graph.node_list.forEach((node) => {
+          node.visited = false;
+          node.parent = null;
+          node.shortestDistance = Number.MAX_VALUE;
+          node.shortestTime = Number.MAX_VALUE;
+        });
+        graph.edge_list.forEach((edge) => {
+          edge.color = "#000000"; // Reset edge color
+        });
+        console.log("Graph has been reset.");
+        document.getElementById("output").innerText = "Graph has been reset.";
+        visualizeGraph(graph, true);
+      }
+
+      // Visualize the graph with Springy.js
+      function visualizeGraph(graph, isStatic) {
+        const springyGraph = new Springy.Graph();
+
+        // Add nodes to the Springy graph and keep track of them
+        const nodeMap = {};
+        graph.node_list.forEach((node) => {
+          nodeMap[node.name] = springyGraph.newNode({ label: node.name });
+        });
+
+        // Add edges to the Springy graph
+        graph.edge_list.forEach((edge) => {
+          const fromNode = nodeMap[edge.fromNode.name];
+          const toNode = nodeMap[edge.toNode.name];
+
+          if (fromNode && toNode) {
+            springyGraph.newEdge(fromNode, toNode, {
+              label: `d:${edge.distance}, t:${edge.time}`,
+              color: edge.color,
+            });
+          }
+        });
+
+        // Use Springy UI to visualize the graph
+        jQuery(function () {
+          const springy = $("#graphCanvas").springy({ graph: springyGraph });
+          if (isStatic) {
+            //springy.layout.force.stop(); // Stop the layout to keep it static
+          }
+        });
+      }
+
+      // Add Node Handler
+      function addNode() {
+        const nodeName = document.getElementById("nodeName").value;
+        if (nodeName) {
+          const node = new Node(nodeName);
+          graph.addNode(node);
+        } else {
+          console.log("Node name cannot be empty.");
+        }
+      }
+
+      // Remove Node Handler
+      function removeNode() {
+        const nodeName = document.getElementById("nodeName").value;
+        if (nodeName) {
+          graph.removeNode(nodeName);
+        } else {
+          console.log("Node name cannot be empty.");
+        }
+      }
+
+      // Add Edge Handler
+      function addEdge() {
+        const fromName = document.getElementById("fromNode").value;
+        const toName = document.getElementById("toNode").value;
+        const distance = parseInt(
+          document.getElementById("distance").value,
+          10
+        );
+        const time = parseInt(document.getElementById("time").value, 10);
+
+        const fromNode = graph.node_list.find((n) => n.name === fromName);
+        const toNode = graph.node_list.find((n) => n.name === toName);
+
+        if (fromNode && toNode && !isNaN(distance) && !isNaN(time)) {
+          const edge = new Edge(fromNode, toNode, distance, time);
+          graph.addEdge(edge);
+        } else {
+          console.log("Invalid input or nodes not found.");
+        }
+      }
+
+      // Remove Edge Handler
+      function removeEdge() {
+        const fromName = document.getElementById("fromNode").value;
+        const toName = document.getElementById("toNode").value;
+
+        if (fromName && toName) {
+          graph.removeEdge(fromName, toName);
+        } else {
+          console.log("Node names cannot be empty.");
+        }
+      }
+
+      // Initialize the graph with an example where the shortest path is different from the fastest path
+      const graph = new Graph();
+
+      const nodes = ["A", "B", "C", "D", "E"]; //, "F"];
+
+      nodes.forEach((name) => {
+        graph.addNode(new Node(name));
+      });
+
+      // Add edges such that the shortest path differs from the fastest path
+      const edges = [
+        { from: "A", to: "B", distance: 2, time: 10 },
+        { from: "A", to: "C", distance: 6, time: 3 },
+        { from: "B", to: "D", distance: 1, time: 4 },
+        { from: "C", to: "D", distance: 2, time: 8 },
+        { from: "D", to: "E", distance: 3, time: 2 },
+        //{ from: "E", to: "F", distance: 4, time: 1 },
+      ];
+
+      edges.forEach((edge) => {
+        const fromNode = graph.node_list.find((n) => n.name === edge.from);
+        const toNode = graph.node_list.find((n) => n.name === edge.to);
+        if (fromNode && toNode) {
+          graph.addEdge(new Edge(fromNode, toNode, edge.distance, edge.time));
+        }
+      });
+    </script>
+  </body>
+</html>
