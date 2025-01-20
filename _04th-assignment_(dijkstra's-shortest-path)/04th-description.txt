@@ -1,0 +1,40 @@
+...
+
+InfT5039
+Dijkstra’s shortest path
+4. Dijkstra’s shortest & fastest paths
+
+4. Dijkstra’s shortest & fastest paths
+Completion requirements
+Opened: Thursday, 9 November 2017, 12:00 AM
+Due: Thursday, 16 November 2017, 12:00 AM
+•Create Edge.time property for storing traveling time.
+•Create function fastestDijkstra() – for finding fastest path
+•Create function reset() - resets parent and visited properties of nodes.
+•Create two buttons: "Shortest path", "Fastest path"
+•(optional) Display calculatated values  on screen with setTimeout() function
+•Display found Dijkstra’s shortest/fastest path on screen (e.g. A->B->...)
+•(optional) visualize graph traversal (e.g. in springy.js property edge.data.color = "#7DBE3C"  can be set)
+
+...
+
+Practical work / Praktiskais darbs
+
+Create Edge.time property for storing traveling time.
+Create function fastestDijkstra() – for finding fastest path
+Create function reset() - resets parent and visited properties of nodes.
+Create two buttons: «Shortest path», «Fastest path» 
+Display distance/time/parent steps with some delay mechanism
+Display found Dijkstra’s shortest/fastest path on screen
+
+For higer mark: visualize graph traversal (e.g. in springy.js property edge.data.color = "#7DBE3C"  can be set)
+
+...
+
+[suggested library: "springy[dot]js"]
+
+...
+
+[suggested computer languages: HTML/CSS/javascript]
+
+...

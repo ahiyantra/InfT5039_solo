@@ -1,0 +1,37 @@
+...
+
+InfT5039
+Graph traversal (Grafu pārmeklēšana)
+3. Breadth-first search (Graph traversal)
+
+3. Breadth-first search (Graph traversal)
+Completion requirements
+Explore DFS example
+
+Implement BFS function
+
+For higher mark create:
+
+1) input elements for building a graph
+2) select element for choosing a start node.
+
+...
+
+Practical work / Praktiskais darbs
+
+Explore DFS example
+Implement BFS function
+
+For higher mark create:
+input fields and visualization of a graph
+select element for choosing a start node.
+
+...
+
+[suggested library: "springy[dot]js"]
+
+...
+
+[suggested computer languages: HTML/CSS/javascript]
+
+...

@@ -1,0 +1,30 @@
+...
+
+InfT5039
+Linked lists (Saistītie saraksti)
+1. Doubly linked list and cyclic linked list / Divkāršsaistīts saraksts un ciklisks saraksts
+
+1. Doubly linked list and cyclic linked list / Divkāršsaistīts saraksts un ciklisks saraksts
+Completion requirements
+Opened: Thursday, 21 September 2017, 1:00 AM
+Create doubly linked list with functions: add, insert, remove. Display results with console.log()
+For higher mark create also a cyclic linked list.
+
+...
+
+Practical work with JavaScript
+
+Examples:
+Reference to the object
+Simply linked list (add, insert, remove)
+Practical work (for mark up to 8):
+Doubly linked list (add, insert, remove)
+Additional work (for mark up to 10) :
+Cyclical list (add, insert, remove)
+For higher mark create input elements and display results as a table
+
+...
+
+[suggested computer languages: HTML/CSS/javascript]
+
+...

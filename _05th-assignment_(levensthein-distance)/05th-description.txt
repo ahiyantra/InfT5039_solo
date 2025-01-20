@@ -1,0 +1,42 @@
+...
+
+InfT5039
+Levenshtein distance
+5. Levenshtein distance
+
+5. Levenshtein distance
+Completion requirements
+Opened: Saturday, 2 December 2017, 12:00 AM
+Due: Saturday, 9 December 2017, 12:00 AM
+1) Create function LevenshteinDistance()
+2) Create two input fields for string input
+3) Display array with distance values
+4) (optional) Create table with strings, while typing hide those strings, that has Levenshtein distance is more or equal 3. 
+
+Search phrase: mūzika [an example]
+
+Table with data:
+mūziķis 5 (hide this row because lev 5 >= 3)
+music 4 (hide)
+muzika 1 (show)
+mūza 2 (show)
+
+Example of result:
+
+(searching for "Mūzika" results in "Muzika" & "Muza" as suggestions)
+
+...
+
+Practical work / Praktiskais darbs
+
+1) Create function LevenshteinDistance()
+2) Create two input fields for string input
+3) Display array with distance values
+For higher mark:
+4) Create table with words, while typing highlight words, that has Levenshtein distance less then 3.
+
+...
+
+[suggested computer languages: HTML/CSS/javascript]
+
+...

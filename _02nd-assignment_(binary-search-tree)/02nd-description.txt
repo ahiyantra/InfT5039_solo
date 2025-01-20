@@ -1,0 +1,36 @@
+...
+
+InfT5039
+Binary Search, Binary Search Tree (Binārā meklēšana un binārie koki)
+2. Binary Search Tree / Binārās meklēšanas koks
+
+2. Binary Search Tree / Binārās meklēšanas koks
+Completion requirements
+Opened: Tuesday, 26 September 2017, 1:00 AM
+Create array with 50 random unique numbers 
+Build balanced Binary Search Tree from these 50 numbers
+Implement search, insert, remove functions of Binary Search Tree.
+Search has to highlight or print the path e.g.23->57->78
+Insert/remove - do this in initial array, otherwise it will get very complicated 
+Print results on the screen (for higher mark create visualization, can  use graphical libraries)
+Present your work to tutor
+
+...
+
+Practical work / Praktiskais darbs
+
+Create BST with 50 nodes (build function)
+Implement: search, insert and remove functions
+Add to estudijas and present to teacher
+
+For higher valuation use input elements to add new elements and visualize a BST (e.g. graphical library for BST)
+
+...
+
+[suggested library: "springy[dot]js"]
+
+...
+
+[suggested computer languages: HTML/CSS/javascript]
+
+...
